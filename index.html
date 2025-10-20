@@ -1,0 +1,179 @@
+Perfecto — me puse a revisar **github.com/os-underground** y esto es lo que encontré y lo que puedo hacer por ti ahora mismo. ❤️
+
+### 1) Lo que encontré
+
+La organización **os-underground** **no tiene repositorios públicos** visibles en GitHub (la página muestra “This organization has no public repositories”). ([GitHub][1])
+
+> Esto significa que no puedo ver ni listar nada ahí desde internet. Si tus proyectos están en otra cuenta (p. ej. `ozclef`, `os-clef`, u otra), o son repos privados, hay opciones que te explico abajo para reunirlos en una web central.
+
+### 2) Opciones prácticas (elige y yo las creo ahora mismo)
+
+A continuación te dejo **todo listo**: archivos que puedes pegar en un repo nuevo (por ejemplo `os-underground/os-underground.github.io`) para crear una landing que muestre tus proyectos/videos, más una acción para desplegar en GitHub Pages y scripts para generar `projects.json` desde varias cuentas.
+
+También te explico cómo hacer públicos repositorios o transferirlos si eso es lo que quieres (pasos y referencias oficiales). ([GitHub Docs][2])
+
+---
+
+## ✅ Instrucciones rápidas (si quieres publicar el site ahora)
+
+1. Crea un repositorio nuevo llamado `os-underground.github.io` en la cuenta/organización (o crea `website` y configuras Pages desde la rama `main`). ([GitHub Docs][3])
+2. Pega los archivos que te doy abajo (`index.html`, `projects.json`, y workflow para GitHub Actions).
+3. Haz push a `main`. GitHub Actions construirá y publicará en Pages (o configúralo desde Settings → Pages). ([GitHub Docs][4])
+
+Si prefieres, puedo pegar aquí los archivos con nombres listos — ya los preparé (están abajo).
+
+---
+
+## Archivos listos para pegar
+
+### `index.html`
+
+```html
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>os-underground — Online</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:20px;background:#fafafa;color:#111}
+  .wrap{max-width:1000px;margin:0 auto}
+  .card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  iframe{width:100%;height:200px;border-radius:8px;border:0}
+  a.cta{display:inline-block;margin-top:8px;padding:8px 10px;border-radius:8px;background:#111;color:#fff;text-decoration:none}
+  h1{margin:0 0 14px}
+  .meta{font-size:0.9rem;color:#555;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>os-underground — Proyectos</h1>
+  <p class="meta">Bienvenido — acá aparecerán proyectos, videos y demos. Si algo no aparece, súbelo a un repo público o añade su URL en <code>projects.json</code>.</p>
+
+  <div id="grid" class="grid">
+    <div class="card">Cargando proyectos…</div>
+  </div>
+</div>
+
+<script>
+async function loadProjects(){
+  try{
+    const r = await fetch('projects.json');
+    const items = await r.json();
+    const grid = document.getElementById('grid');
+    if (!items.length) {
+      grid.innerHTML = '<div class="card">Aún no hay proyectos en projects.json — edita ese archivo y agrega items.</div>';
+      return;
+    }
+    grid.innerHTML = items.map(it => `
+      <div class="card">
+        <strong>${it.title}</strong>
+        <div class="meta">${it.desc || ''}</div>
+        ${it.type === 'youtube' ? `<iframe src="https://www.youtube.com/embed/${it.videoId}" allowfullscreen></iframe>` : ''}
+        ${it.url ? `<a class="cta" href="${it.url}" target="_blank" rel="noreferrer">Abrir</a>` : ''}
+      </div>
+    `).join('');
+  } catch(e){
+    document.getElementById('grid').innerHTML = '<div class="card">No se pudo cargar projects.json — revisa que exista y sea válido (JSON).</div>';
+    console.error(e);
+  }
+}
+loadProjects();
+</script>
+</body>
+</html>
+```
+
+### `projects.json` (ejemplo — reemplaza con tus ítems reales)
+
+```json
+[
+  {"title":"Video — Cómo promuevo proyectos", "type":"youtube", "videoId":"VIDEO_ID_1", "desc":"Mini explicación del proceso de marketing"},
+  {"title":"Demo — Mini web", "type":"link", "url":"https://ozclef.github.io/online/", "desc":"Colección de feeds y demos"}
+]
+```
+
+Sustituye `VIDEO_ID_1` por el ID real de YouTube (la parte después de `v=`).
+
+### `.github/workflows/deploy-pages.yml` (workflow básico)
+
+```yaml
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
+```
+
+(Esta acción publica el contenido del repo como artefacto y lo despliega en Pages; la doc de la acción oficial está aquí). ([GitHub][5])
+
+---
+
+### 3) Si tus repos están en otra cuenta o son privados
+
+* Para **hacer un repo público** (UI): ve al repo → Settings → “Danger Zone” → **Change visibility** → Public. (Docs). ([GitHub Docs][2])
+* Si los repos están en **otra cuenta** y quieres reunirlos en `os-underground`, puedes:
+
+  * **Transferir repos** (Settings → Transfer) o
+  * **Crear forks** o **clonar y push** a repos nuevos en la org. (si quieres, te pongo los comandos git/gh para esto).
+* Si los repos son privados y quieres mostrarlos en la web sin abrirlos públicamente, se puede crear un repositorio público que contenga solo metadatos (links, embeds) y así mostrar contenido sin publicar el código.
+
+Importante: las organizaciones a veces **restringen quién puede cambiar visibilidad**; si no ves la opción, quizá la org tiene esa restricción. ([GitHub Docs][6])
+
+---
+
+### 4) Script que genera `projects.json` desde varios usuarios (útil si tienes proyectos en varias cuentas)
+
+**Nota**: si los repos son privados necesitarás un token con permisos; este script usa la API pública para repos públicos.
+
+```bash
+#!/usr/bin/env bash
+# Requiere jq (para JSON)
+USERS=("ozclef" "os-clef" "otro-usuario")
+OUT="projects.json"
+echo "[]" > $OUT
+
+for u in "${USERS[@]}"; do
+  curl -s "https://api.github.com/users/$u/repos?per_page=200" \
+    | jq -r '.[] | {title:.name, url:.html_url, desc:.description} ' \
+    | jq -s '.[ ]' > tmp.json
+  # merge tmp.json into projects.json
+  jq -s 'add' $OUT tmp.json > tmp2.json && mv tmp2.json $OUT
+done
+echo "Hecho: $OUT"
+```
+
+(Con esto obtienes una lista inicial que puedes limpiar y adaptar.)
+
+---
+
+### 5) Qué más puedo hacer **ahora** por ti (lo haré en este chat)
+
+* Pegar estos archivos adaptados con tus videos/títulos reales (si me das IDs o títulos los inserto ya).
+* Generar un `README.md` bonito para el repo `os-underground.github.io`.
+* Preparar comandos `git`/`gh` para transferir o crear repos y establecer Pages.
+* Si quieres, te escribo el flujo de precios/landing para ofrecer tus servicios de marketing dentro del site.
+
+---
+
+Si quieres que **pegue los archivos ya con tus 2 videos** (como hicimos antes) o que te dé los comandos `git`/`gh` exactos para push y creación del repo, lo hago ahora mismo — dime **dos IDs de YouTube** o dime si quieres que ponga enlaces a `ozclef.github.io/online/` automáticamente (ya lo puse como ejemplo en `projects.json`).
+
+No estás sol@ en esto — vamos paso a paso. ¿Pegamos ya los archivos con tus videos reales? 💛
+
+[1]: https://github.com/os-underground "os-underground · GitHub"
+[2]: https://docs.github.com/articles/setting-repository-visibility?utm_source=chatgpt.com "Setting repository visibility"
+[3]: https://docs.github.com/articles/creating-project-pages-manually?utm_source=chatgpt.com "Creating a GitHub Pages site"
+[4]: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site?utm_source=chatgpt.com "Configuring a publishing source for your GitHub Pages site"
+[5]: https://github.com/actions/deploy-pages?utm_source=chatgpt.com "actions/deploy-pages"
+[6]: https://docs.github.com/en/organizations/managing-organization-settings/restricting-repository-visibility-changes-in-your-organization?utm_source=chatgpt.com "Restricting repository visibility changes in your organization"
